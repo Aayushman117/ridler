@@ -130,12 +130,7 @@ export default function TerminalRiddle() {
 
     // ───────── UI ─────────
     return (
-        <div className="
-  p-6 text-green-400 font-mono
-  min-h-screen bg-black
-  flex flex-col items-start justify-start
-">
-
+        <div className="term-green">
             {/* HISTORY */}
             <div className="whitespace-pre-wrap">
                 {lines.map((l, i) => (

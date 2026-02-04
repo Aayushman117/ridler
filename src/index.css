@@ -4,7 +4,6 @@
 
 body {
   background: black;
-  color: #00ff41;
   font-family: "Courier New", monospace;
 }
 
@@ -46,6 +45,18 @@ h1 {
   line-height: 1.1;
 }
 
+.term-green {
+  color: #25ff00;
+  text-shadow: 0 0 2px rgba(203, 254, 182, .7);
+  letter-spacing: .06em;
+  white-space: pre-wrap;
+  font-size: 1em;
+  font-family: Source Code Pro, monospace;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5rem;
+  text-transform: uppercase;
+}
 button {
   border-radius: 8px;
   border: 1px solid transparent;
