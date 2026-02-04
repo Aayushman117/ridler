@@ -6,6 +6,7 @@ export default function TerminalRiddle() {
     const [userInput, setUserInput] = useState("");
     const [stage, setStage] = useState("intro");
     const [index, setIndex] = useState(0);
+    const [wrongCount, setWrongCount] = useState(0);
     const [lines, setLines] = useState([]);
 
 
@@ -15,6 +16,8 @@ export default function TerminalRiddle() {
     const addLine = (text) => {
         setLines(prev => [...prev, text]);
     };
+
+
 
 
     // ───────── TYPEWRITER (SAFE) ─────────
@@ -64,13 +67,16 @@ export default function TerminalRiddle() {
     // ───────── KEYBOARD ─────────
     useEffect(() => {
         const handleKey = (e) => {
-            if (stage === "ready" || e.key === "Enter") {
+            if (stage === "ready" && e.key === "Enter") {
                 startRiddle();
                 return;
             }
 
             if (stage === "answer") {
+                console.log("1")
                 if (e.key === "Enter") {
+                    console.log("2")
+                    e.preventDefault();
                     checkAnswer();
                 } else if (e.key === "Backspace") {
                     setUserInput((p) => p.slice(0, -1));
@@ -87,6 +93,8 @@ export default function TerminalRiddle() {
     // ───────── CHECK ANSWER ─────────
     const checkAnswer = async () => {
         const correct = riddles[index].answer.toLowerCase().trim();
+        console.log("ANSER :::: ", correct)
+        console.log("v :::: ", userInput)
 
         // Show what user typed in history
         addLine("> " + userInput);
@@ -114,6 +122,7 @@ export default function TerminalRiddle() {
             // 🔥 YOUR REQUESTED MESSAGE
             await typeText("NOT CLEVER BRO. TRY ONE LAST TIME.");
             setUserInput("");
+            setWrongCount(prev => prev+1)
             setStage("answer");   // stay in answer mode, no question repeat
         }
     };
@@ -140,7 +149,8 @@ export default function TerminalRiddle() {
             )}
 
             {/* USER INPUT LINE */}
-            {stage === "answer" && (
+
+            {(stage === "answer" && wrongCount < 3) && (
                 <div className="mt-1">
                     {"> " + userInput}
                     <span className="animate-pulse">▮</span>
