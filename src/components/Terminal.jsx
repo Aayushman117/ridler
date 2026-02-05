@@ -1,14 +1,31 @@
 import { useEffect, useRef, useState } from "react";
 import { riddles } from "../data/riddles";
 
+const shutdownScript = [
+    "systemctl stop sshd",
+    "systemctl status sshd",
+    "● sshd.service - OpenSSH Daemon",
+    "Loaded: loaded (/lib/systemd/system/sshd.service; enabled; vendor preset: enabled)",
+    "Active: inactive (dead)",
+    "Docs: man:sshd(8)",
+    "man:sshd_config(5)",
+    "Main PID: 1228 (code=exited, status=0/SUCCESS)",
+    "rm /var/log/sshd.log",
+    "echo -n > ~/.bash_history",
+    "exit"
+];
+
 export default function TerminalRiddle() {
     const [displayText, setDisplayText] = useState("");
     const [userInput, setUserInput] = useState("");
     const [stage, setStage] = useState("intro");
     const [index, setIndex] = useState(0);
-    const [wrongCount, setWrongCount] = useState(0);
-    const [lines, setLines] = useState([]);
+    const [wrongCount] = useState(0);
 
+    const [lines, setLines] = useState([]);
+    const [failCount, setFailCount] = useState(0);
+    const [blackout, setBlackout] = useState(false);
+    const [exitMode, setExitMode] = useState(false);
 
     const startedRef = useRef(false);
     const cancelRef = useRef(false);
@@ -17,10 +34,7 @@ export default function TerminalRiddle() {
         setLines(prev => [...prev, text]);
     };
 
-
-
-
-    // ───────── TYPEWRITER (SAFE) ─────────
+    /* ───────── NORMAL TYPER ───────── */
     const typeText = async (text) => {
         cancelRef.current = false;
 
@@ -28,18 +42,30 @@ export default function TerminalRiddle() {
         for (let i = 0; i < text.length; i++) {
             if (cancelRef.current) return;
 
-            await new Promise((r) => setTimeout(r, 35));
+            await new Promise(r => setTimeout(r, 35));
             built += text[i];
             setDisplayText(built);
         }
 
-        // After finished typing → push to history
         addLine("> " + built);
         setDisplayText("");
     };
 
+    /* ───────── EXIT TYPER ───────── */
+    const typeExitLine = async (text) => {
+        let built = "";
 
-    // ───────── INTRO ONCE ONLY ─────────
+        for (let i = 0; i < text.length; i++) {
+            await new Promise(r => setTimeout(r, 6));
+            built += text[i];
+            setDisplayText(built);
+        }
+
+        addLine({ text: built, system: true });
+        setDisplayText("");
+    };
+
+    /* ───────── INTRO ───────── */
     useEffect(() => {
         if (startedRef.current) return;
         startedRef.current = true;
@@ -50,21 +76,16 @@ export default function TerminalRiddle() {
         };
 
         run();
-
-        return () => {
-            cancelRef.current = true;
-        };
+        return () => { cancelRef.current = true; };
     }, []);
 
-    // ───────── START RIDDLE ─────────
     const startRiddle = async () => {
-        console.log("riddle start")
         setStage("typing");
         await typeText(riddles[index].question);
         setStage("answer");
     };
 
-    // ───────── KEYBOARD ─────────
+    /* ───────── KEYBOARD ───────── */
     useEffect(() => {
         const handleKey = (e) => {
             if (stage === "ready" && e.key === "Enter") {
@@ -73,30 +94,40 @@ export default function TerminalRiddle() {
             }
 
             if (stage === "answer") {
-                console.log("1")
                 if (e.key === "Enter") {
-                    console.log("2")
                     e.preventDefault();
                     checkAnswer();
                 } else if (e.key === "Backspace") {
-                    setUserInput((p) => p.slice(0, -1));
-                } else if (e.key?.length === 1) {
-                    setUserInput((p) => p + e.key);
+                    setUserInput(p => p.slice(0, -1));
+                } else if (e.key.length === 1) {
+                    setUserInput(p => p + e.key);
                 }
             }
         };
 
         window.addEventListener("keydown", handleKey);
         return () => window.removeEventListener("keydown", handleKey);
+
     }, [stage, userInput, index]);
 
-    // ───────── CHECK ANSWER ─────────
+    /* ───────── EXIT SEQUENCE ───────── */
+    const runBlackoutSequence = async () => {
+        setLines([]);
+        setDisplayText("");
+
+        for (let line of shutdownScript) {
+            await typeExitLine(line);
+            await new Promise(r => setTimeout(r, 70));
+        }
+
+        await new Promise(r => setTimeout(r, 3000));
+        setBlackout(true);
+    };
+
+    /* ───────── CHECK ANSWER ───────── */
     const checkAnswer = async () => {
         const correct = riddles[index].answer.toLowerCase().trim();
-        console.log("ANSER :::: ", correct)
-        console.log("v :::: ", userInput)
 
-        // Show what user typed in history
         addLine("> " + userInput);
 
         if (userInput.toLowerCase().trim() === correct) {
@@ -104,14 +135,10 @@ export default function TerminalRiddle() {
             await typeText("CORRECT... NEXT CHALLENGE UNLOCKED.");
 
             const next = index + 1;
-
             if (next < riddles.length) {
                 setIndex(next);
                 setUserInput("");
-
-                // Start next riddle on NEXT LINE
                 await typeText(riddles[next].question);
-
                 setStage("answer");
             } else {
                 await typeText("YOU HAVE SOLVED EVERYTHING. MORE SOON.");
@@ -119,36 +146,74 @@ export default function TerminalRiddle() {
             }
 
         } else {
-            // 🔥 YOUR REQUESTED MESSAGE
+            const newFail = failCount + 1;
+            setFailCount(newFail);
+
+            if (newFail >= 5) {
+                setExitMode(true);
+                await runBlackoutSequence();
+                return;
+            }
+
             await typeText("NOT CLEVER BRO. TRY ONE LAST TIME.");
             setUserInput("");
-            setWrongCount(prev => prev+1)
-            setStage("answer");   // stay in answer mode, no question repeat
+            setStage("answer");
         }
     };
 
+    if (blackout) {
+        return <div className="bg-black min-h-screen w-full"></div>;
+    }
 
-    // ───────── UI ─────────
+    /* ───────── UI ───────── */
+
+    if (exitMode) {
+        return (
+            <div className="term-green" style={{ minHeight: "100vh", paddingTop: "40px" }}>
+                <div className="whitespace-pre-wrap">
+                    {lines.map((l, i) => {
+                        if (typeof l === "object" && l.system) {
+                            return (
+                                <div key={i} style={{ marginLeft: "60px" }}>
+                                    {l.text.toLowerCase()}
+                                </div>
+                            );
+                        }
+                        return null;
+                    })}
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="term-green">
-            {/* HISTORY */}
+        <div className="term-green" style={{ minHeight: "100vh", paddingTop: "40px" }}>
+
             <div className="whitespace-pre-wrap">
-                {lines.map((l, i) => (
-                    <div key={i}>{l}</div>
-                ))}
+                {lines.map((l, i) => {
+                    if (typeof l === "object" && l.system) {
+                        return (
+                            <div key={i} style={{ marginLeft: "60px" }}>
+                                {l.text.toLowerCase()}
+                            </div>
+                        );
+                    }
+
+                    return <div key={i}>{l}</div>;
+                })}
             </div>
 
-            {/* CURRENT TYPING LINE */}
             {displayText && (
-                <div>{"> " + displayText}</div>
+                <div>
+                    {"> " + displayText}
+                    <span className="cursor-block">█</span>
+                </div>
             )}
-
-            {/* USER INPUT LINE */}
 
             {(stage === "answer" && wrongCount < 3) && (
                 <div className="mt-1">
                     {"> " + userInput}
-                    <span className="animate-pulse">▮</span>
+                    <span className="cursor-block">█</span>
                 </div>
             )}
 

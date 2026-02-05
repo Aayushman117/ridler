@@ -40,3 +40,11 @@
 .read-the-docs {
   color: #888;
 }
+.term-green {
+  display: block !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  padding-top: 10px !important;
+  margin: 0 !important;
+}
