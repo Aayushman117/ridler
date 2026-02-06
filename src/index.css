@@ -2,39 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ───────── GLOBAL RESET ───────── */
 html, body, #root {
   margin: 0;
   padding: 0;
   background: black;
   min-height: 100vh;
-  font-family: "Courier New", monospace;
+  font-family: "Source Code Pro", monospace;
+  font-size: 23px;
 }
 
-/* ───────── TERMINAL STYLE ───────── */
 .term-green {
   color: #25ff00;
   text-shadow: 0 0 2px rgba(203, 254, 182, .7);
   letter-spacing: .06em;
   white-space: pre-wrap;
-  font-size: 1em;
-  font-family: Source Code Pro, monospace;
+
+  font-size: 1.15em;        /* bigger text */
+  font-family: "Source Code Pro", Consolas, monospace;
   font-style: normal;
   font-weight: 400;
-  line-height: 1.5rem;
+  line-height: 1.6rem;
 
-  /* IMPORTANT FIXES */
-  text-transform: none;        /* no uppercase */
+  text-transform: none;
   display: block;
 }
 
-/* ───────── CURSOR ───────── */
+/* Cursor blinks ONLY when this class is present */
 @keyframes termBlink {
   0% { opacity: 1; }
   50% { opacity: 0; }
   100% { opacity: 1; }
 }
 
-.cursor-block {
-  animation: termBlink 1s step-end infinite;
-}
+.cursor-idle {
+  animation: term}
