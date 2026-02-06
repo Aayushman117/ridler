@@ -26,13 +26,12 @@ export default function TerminalRiddle() {
     const [exitMode, setExitMode] = useState(false);
 
     const [riddleStage, setRiddleStage] = useState(1);
-
     const [usedTaunts, setUsedTaunts] = useState([]);
 
     const startedRef = useRef(false);
     const cancelRef = useRef(false);
 
-    // ───── MOBILE INPUT REF ─────
+    // MOBILE INPUT REF
     const hiddenInputRef = useRef(null);
 
     const addLine = (t) => setLines(p => [...p, t]);
@@ -47,7 +46,6 @@ export default function TerminalRiddle() {
     ];
 
     const getRandomTaunt = () => {
-
         let available = taunts.filter(t => !usedTaunts.includes(t));
 
         if (available.length === 0) {
@@ -80,7 +78,6 @@ export default function TerminalRiddle() {
         ];
 
         for (let line of shutdownScript) {
-
             await new Promise(r => setTimeout(r, 220));
 
             setLines(prev => [
@@ -129,7 +126,7 @@ export default function TerminalRiddle() {
     const startRiddle = async () => {
 
         if (riddleStage === 1) {
-            setIndex(0);      // FORCE FIRST RIDDLE
+            setIndex(0);
         }
 
         await typeWords(
@@ -195,7 +192,7 @@ export default function TerminalRiddle() {
                 if (e.key.toLowerCase() === "y") {
                     addLine(">> Y");
 
-                    setIndex(1);            // Justice riddle
+                    setIndex(1);
                     setFailCount(0);
                     setRiddleStage(2);
                     setUserInput("");
@@ -227,9 +224,7 @@ export default function TerminalRiddle() {
             s.toLowerCase().replace(/[^a-z ]/g, "").trim();
 
         const correct = clean(riddles[index].answer);
-
         const alternatives = (riddles[index].alt || []).map(clean);
-
         const user = clean(userInput);
 
         const isCorrect =
@@ -297,11 +292,11 @@ export default function TerminalRiddle() {
         return <div className="bg-black min-h-screen w-full"></div>;
     }
 
-    /* ───── UI ───── */
+    /* ───── UI (MOBILE SIZE VIA CSS ONLY) ───── */
     return (
         <div
             className="term-green"
-            style={{ minHeight: "100vh", paddingTop: "40px" }}
+            style={{ minHeight: "100vh", paddingTop: "20px" }}
             onClick={() => hiddenInputRef.current?.focus()}
         >
 
@@ -310,14 +305,22 @@ export default function TerminalRiddle() {
 
                     if (typeof l === "object" && l.system) {
                         return (
-                            <div key={i} style={{ marginLeft: "40px" }}>
+                            <div
+                                key={i}
+                                className="mobile-exit-margin"
+                                style={{ marginLeft: "40px", wordBreak: "break-word" }}
+                            >
                                 {l.text}
                             </div>
                         );
                     }
 
                     return (
-                        <div key={i} style={{ marginLeft: "28px" }}>
+                        <div
+                            key={i}
+                            className="mobile-margin"
+                            style={{ marginLeft: "28px", wordBreak: "break-word" }}
+                        >
                             {l}
                         </div>
                     );
@@ -326,16 +329,18 @@ export default function TerminalRiddle() {
             </div>
 
             {displayText && (
-                <div style={{ marginLeft: "28px" }}>
+                <div
+                    className="mobile-margin"
+                    style={{ marginLeft: "28px", wordBreak: "break-word" }}
+                >
                     {">> " + displayText}
                     <span style={cursorStyle}>{"<?>"}</span>
                 </div>
             )}
 
-            {/* ───── MOBILE HIDDEN INPUT ───── */}
             {!exitMode && (stage === "answer" || stage === "confirm" || stage === "failDialog") && (
                 <div
-                    className="mt-1"
+                    className="mt-1 mobile-margin"
                     style={{ marginLeft: "28px", position: "relative" }}
                 >
 

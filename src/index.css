@@ -10,6 +10,21 @@ html, body, #root {
   font-family: "Source Code Pro", monospace;
   font-size: 23px;
 }
+/* ───── MOBILE SIZE ONLY (DESKTOP UNTOUCHED) ───── */
+@media (max-width: 600px) {
+  .term-green {
+    font-size: 13px !important;
+    line-height: 1.3rem !important;
+  }
+
+  .mobile-margin {
+    margin-left: 10px !important;
+  }
+
+  .mobile-exit-margin {
+    margin-left: 14px !important;
+  }
+}
 
 .term-green {
   color: #25ff00;
